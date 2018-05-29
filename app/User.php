@@ -1,29 +1,39 @@
 <?php
 
-namespace App;
+namespace App\Http\Controllers\Auth;
 
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
-class User extends Authenticatable
+class LoginController extends Controller
 {
-    use Notifiable;
+    /*
+    |--------------------------------------------------------------------------
+    | Login Controller
+    |--------------------------------------------------------------------------
+    |
+    | This controller handles authenticating users for the application and
+    | redirecting them to your home screen. The controller uses a trait
+    | to conveniently provide its functionality to your applications.
+    |
+    */
+
+    use AuthenticatesUsers;
 
     /**
-     * The attributes that are mass assignable.
+     * Where to redirect users after login.
      *
-     * @var array
+     * @var string
      */
-    protected $fillable = [
-        'name', 'email', 'password',
-    ];
+    protected $redirectTo = '/';
 
     /**
-     * The attributes that should be hidden for arrays.
+     * Create a new controller instance.
      *
-     * @var array
+     * @return void
      */
-    protected $hidden = [
-        'password', 'remember_token',
-    ];
+    public function __construct()
+    {
+        $this->middleware('guest')->except('logout');
+    }
 }
