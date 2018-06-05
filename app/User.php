@@ -1,39 +1,84 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class LoginController extends Controller
+class User extends Authenticatable
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
-    use AuthenticatesUsers;
+    use Notifiable;
 
     /**
-     * Where to redirect users after login.
+     * The attributes that are mass assignable.
      *
-     * @var string
+     * @var array
      */
-    protected $redirectTo = '/';
+    protected $fillable = [
+        'name', 'email', 'password',
+    ];
 
     /**
-     * Create a new controller instance.
+     * The attributes that should be hidden for arrays.
      *
-     * @return void
+     * @var array
      */
-    public function __construct()
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+    
+    public function microposts()
     {
-        $this->middleware('guest')->except('logout');
+        return $this->hasMany(Micropost::class);
+    }
+    
+    public function followings()
+    {
+        return $this->belongsToMany(User::class, 'user_follow', 'user_id', 'follow_id')->withTimestamps();
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'user_follow', 'follow_id', 'user_id')->withTimestamps();
+    }
+
+    public function follow($userId)
+    {
+        // confirm if already following
+        $exist = $this->is_following($userId);
+        // confirming that it is not you
+        $its_me = $this->id == $userId;
+    
+        if ($exist || $its_me) {
+            // do nothing if already following
+            return false;
+        } else {
+            // follow if not following
+            $this->followings()->attach($userId);
+            return true;
+        }
+    }
+    
+    public function unfollow($userId)
+    {
+        // confirming if already following
+        $exist = $this->is_following($userId);
+        // confirming that it is not you
+        $its_me = $this->id == $userId;
+    
+    
+        if ($exist && !$its_me) {
+            // stop following if following
+            $this->followings()->detach($userId);
+            return true;
+        } else {
+            // do nothing if not following
+            return false;
+        }
+    }
+    
+    
+    public function is_following($userId) {
+        return $this->followings()->where('follow_id', $userId)->exists();
     }
 }
